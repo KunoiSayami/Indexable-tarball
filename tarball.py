@@ -110,14 +110,12 @@ class IndexableTarball:
     async def _load_file_struct(self) -> None:
         await self._file_obj.seek(0)
         obj = await self._file_obj.read(struct.calcsize('<HQ22p'))
-        print(len(obj))
         _ver, struct_offset, _reserved = struct.unpack('<HQ22p', obj)
         if _ver != self.VERSION:
             raise VersionException(f'Except version: {self.VERSION} but {_ver} found')
         await self._file_obj.seek(struct_offset)
         self._file_struct = {key: FileProperties.create(value) for key, value in
                              json.loads((await self._file_obj.read()).decode()).items()}
-        print(self._file_struct)
 
     async def write(self, input_file_name: str, relative_path: str = '') -> None:
         h = hashlib.sha256()
@@ -217,6 +215,7 @@ async def test_file(large: bool = False) -> None:
             obj = b''.join(os.urandom(size) for _ in range(random.randint(3, 6)))
             await fout.write(obj)
             h.update(obj)
+            del obj
         p.update({file_name: h.hexdigest()})
     await process_all_file_in_dir(p)
     await extract_files(p)
